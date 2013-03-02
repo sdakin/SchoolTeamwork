@@ -1,0 +1,365 @@
+<style>
+
+.class-module {
+	padding-left:6px;
+}
+
+.class-header {
+	padding-top:8px;
+	padding-bottom:8px;
+}
+
+.field_label {
+	display:inline-block;
+	padding-right:5px;
+}
+
+#class-selector {
+	display:inline-block;
+}
+
+.class-dropdown-label {
+	padding-right:4px;
+}
+
+.dropdown-menu>li {
+	cursor:default;
+}
+
+.class-list-frame {
+	width:304px;
+	height:312px;
+	border:1px solid;
+	background-color:white;
+	overflow-y:scroll;
+	overflow-x:hidden;
+}
+
+.class-list {
+	display:table;
+	width:100%;
+}
+
+.class-module>.button-bar {
+	padding-top:10px;
+}
+
+.class-list-row {
+	display:table-row;
+	vertical-align:middle;
+	cursor:default;
+}
+
+.class-list-name {
+	padding: 2px 5px;
+}
+
+.class-list-status {
+	display:table-cell;
+	width:20px;
+	padding-top:2px;
+	padding-left:5px;
+}
+
+.class-list-name {
+	display:table-cell;
+}
+
+.class-student-selected {
+	background-color: navy;
+	color: white;
+}
+
+.class-module .button-bar {
+	padding-top:17px;
+}
+
+</style>
+
+<div class="class-templates" style="display:none">
+	<li class="class-menu-item"><a class="class-choice"></a></li>
+	<div class="class-list-row"><div class="class-list-status">&nbsp;</div><div class="class-list-name"></div></div>
+</div>
+
+<div class="class-module">
+    <div class="class-header">
+        <div class="field_label">Class </div>
+        <div id="class-selector" class="btn-group">
+          <a class="btn dropdown-toggle" data-toggle="dropdown">
+            <span class="class-dropdown-label">Select</span>
+            <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu"></ul>
+        </div>
+    </div>
+    
+    <div class="class-list-frame">
+        <div class="class-list"></div>
+	</div>
+        
+    <div class="button-bar">
+        <div style="display:inline-block">
+        	<button class="btn btn-success score-btn" style="width:100px" disabled="disabled">Score</button>
+        </div>
+    </div>
+</div>
+
+<script>
+//-----------------------------------------------------------------------------------
+//
+// ClassModule - represents a class run by one or more teachers containing a list
+//				 of students.
+//
+// Inherits from EventTarget
+//
+// TDOD:
+//		replace all refereces to: this.selectedStudent
+//							with: this.selectedClass.get/setCurStudentIndex()
+
+ClassModule.prototype = new EventTarget();
+ClassModule.prototype.constructor = ClassModule;
+
+// events fired by this object
+ClassModule.CLASS_SELECTED = "ClassSelected";	// { classData:{name:String, slot:String, students:Array }
+ClassModule.SCORE_STUDENT = "ScoreStudent";	// { student:Object }
+
+function ClassModule() {
+	EventTarget.call(this);
+	
+	var $ui = this.getUI();
+	var $btns = $ui.find(".button-bar button");
+	var self = this;
+	$($btns[0]).click({self:self}, function(e) {
+		var student = self.getSelectedStudent();
+		self.fire({type:ClassModule.SCORE_STUDENT, student:student}) } );
+
+	$.each(classes, function(index, value) {
+		var $item = $(".class-templates .class-menu-item").clone();
+		$item.find("a").text(value.name + ", " + value.slot);
+		$ui.find(".dropdown-menu").append($item);
+		value.addListener(StudentList.STUDENT_LIST_CHANGED, onStudentListChanged);
+	});
+	
+	var $menuItems = $ui.find(".dropdown-menu a");
+	$menuItems.click(function(e) {
+		var index = $.inArray(e.target, $menuItems);
+		if (index >= 0 && index < classes.length) {
+			self.loadClass(index);
+		}
+	});
+	
+	function onStudentListChanged(e) {
+		self.selectStudent(e.target.getCurStudent());
+	}
+}
+
+ClassModule.prototype.addStudent = function(student) {
+	var $classList = this.getList();
+	var $studentUI = this.getUI().find(".class-templates .class-list-row").clone();
+	this.renderStudent(student, $studentUI);
+	$classList.append($studentUI);
+	var self = this;
+	$studentUI.click(function(e) {
+		self.selectStudent(student);
+	});
+}
+
+ClassModule.prototype.getList = function() {
+	return this.getUI().find(".class-list");
+}
+
+ClassModule.prototype.getSelectedStudent = function() { return this.selectedStudent; }
+
+ClassModule.prototype.getStudentUI = function(student) {
+	var result = null;
+	if (this.selectedClass) {
+		var studentIndex = $.inArray(student, this.selectedClass.students);
+		if (studentIndex >= 0) {
+			var $rows = this.getList().find(".class-list-row");
+			result = $($rows[studentIndex]);
+		}
+	}
+	return result;
+}
+
+ClassModule.prototype.getUI = function() {
+	return $("#class-panel");
+}
+
+ClassModule.prototype.loadClass = function(classIndex) {
+	var classData = classes[classIndex];
+	this.selectedClass = classData;
+	this.getUI().find(".class-dropdown-label").text(classData.name + ", " + classData.slot);
+	this.fire({type:ClassModule.CLASS_SELECTED, classData:classData});
+	this.getList().empty();
+	this.selectedStudent = null;
+	this.getUI().find(".score-btn").attr("disabled", "disabled");
+	var self = this;
+	$.each(classData.students, function(index, value) {
+		value.addListener(StudentData.STUDENT_CHANGED, onStudentChanged);
+		self.addStudent(value);
+	});
+	
+	// select the first non-scored student
+	for (var i = 0 ; i < classData.students.length ; i++) {
+		if (classData.students[i].status != "scored") {
+			this.selectStudent(classData.students[i]);
+			
+			// scroll the item into view if necessary
+			var $rows = this.getList().find(".class-list-row");
+			$rows.get(i).scrollIntoView();
+			
+			break;
+		}
+	}
+	
+	function onStudentChanged(e) {
+		self.renderStudent(e.target, self.getStudentUI(e.target));
+	}
+}
+
+ClassModule.prototype.renderStudent = function(student, studentUI) {
+	studentUI.find(".class-list-name").text(student.name);
+	var statusIndicator = "";
+	if (student.status == "scored") 
+		statusIndicator = $('<img src="img/tick.png"/>');
+	studentUI.find(".class-list-status").html(statusIndicator);
+}
+
+ClassModule.prototype.selectStudent = function(student) {
+	var $classList = this.getList();
+	$classList.find(".class-list-row").removeClass("class-student-selected");
+	var studentIndex = $.inArray(student, this.selectedClass.students);
+	if (studentIndex >= 0) {
+		var $rows = this.getList().find(".class-list-row");
+		$($rows[studentIndex]).addClass("class-student-selected");
+		this.getUI().find(".score-btn").removeAttr("disabled");
+	} else {
+		this.getUI().find(".score-btn").attr("disabled", "disabled");
+	}
+	this.selectedStudent = student;
+	this.selectedClass.setCurStudentIndex(studentIndex);
+}
+
+// student names randomly generated using: http://www.kleimo.com/random/name.cfm
+var classes = [
+	new StudentList({
+		name:"Pre-Algebra",
+		slot:"2nd period",
+		students: [
+			new StudentData({name:"Annabelle Vince"}),
+			new StudentData({name:"Brian Wollenberg"}),
+			new StudentData({name:"Clayton Matton"}),
+			new StudentData({name:"Darren Laubscher"}),
+			new StudentData({name:"Darryl Yerkes"}),
+			new StudentData({name:"Erik Whidden"}),
+			new StudentData({name:"Eve Carriere"}),
+			new StudentData({name:"Guy Delmonte"}),
+			new StudentData({name:"Jamie Demko"}),
+			new StudentData({name:"Javier Edgerly"}),
+			new StudentData({name:"Jerri Newhall"}),
+			new StudentData({name:"Kelly Rollison"}),
+			new StudentData({name:"Kurt Grignon"}),
+			new StudentData({name:"Liza Fill"}),
+			new StudentData({name:"Lonnie Bibeau"}),
+			new StudentData({name:"Mathew Denver"}),
+			new StudentData({name:"Max Gudgel"}),
+			new StudentData({name:"Nannie Haverty"}),
+			new StudentData({name:"Neil Schlicher"}),
+			new StudentData({name:"Nelson Slee"}),
+			new StudentData({name:"Noemi Crosswell"}),
+			new StudentData({name:"Sharron Herrada"}),
+			new StudentData({name:"Tabatha Duley"}),
+			new StudentData({name:"Ted Begaye"}),
+			new StudentData({name:"Tyrone Barrus"})
+		]
+	}),
+	new StudentList({
+		name:"Algebra",
+		slot:"3rd period",
+		students: [
+			new StudentData({name:"Alana Dively"}),
+			new StudentData({name:"Allan Kauppi"}),
+			new StudentData({name:"Clayton Cianciolo"}),
+			new StudentData({name:"Darryl Knicely"}),
+			new StudentData({name:"Fernando Kirwin"}),
+			new StudentData({name:"Guy Deibler"}),
+			new StudentData({name:"Hillary Nova"}),
+			new StudentData({name:"Jamie Olmo"}),
+			new StudentData({name:"Jeanie Eoff"}),
+			new StudentData({name:"Jessie Bigley"}),
+			new StudentData({name:"Julianne Barrentine"}),
+			new StudentData({name:"Julio Vogl"}),
+			new StudentData({name:"Kurt Mollica"}),
+			new StudentData({name:"Margery Conry"}),
+			new StudentData({name:"Milagros Koopman"}),
+			new StudentData({name:"Neil Crespin"}),
+			new StudentData({name:"Neil Leith"}),
+			new StudentData({name:"Nelson Pavia"}),
+			new StudentData({name:"Nita Kamps"}),
+			new StudentData({name:"Tameka Yohn"}),
+			new StudentData({name:"Tyrone Tschanz"})
+		]
+	}),
+	new StudentList({
+		name:"Algebra",
+		slot:"4th period",
+		students: [
+			new StudentData({name:"Allie Hornick"}),
+			new StudentData({name:"Allyson Johannsen"}),
+			new StudentData({name:"Carmella Atkin"}),
+			new StudentData({name:"Christian Caulder"}),
+			new StudentData({name:"Clinton Malveaux"}),
+			new StudentData({name:"Darren Joplin"}),
+			new StudentData({name:"Fernando Woodburn"}),
+			new StudentData({name:"Guy Kendra"}),
+			new StudentData({name:"Javier Tineo"}),
+			new StudentData({name:"Jessie Denn"}),
+			new StudentData({name:"Kenya Vong"}),
+			new StudentData({name:"Kurt Bendickson"}),
+			new StudentData({name:"Lilia Cudjoe"}),
+			new StudentData({name:"Lorrie Fuss"}),
+			new StudentData({name:"Marcie Fetters"}),
+			new StudentData({name:"Maricela Costas"}),
+			new StudentData({name:"Max Pullum"}),
+			new StudentData({name:"Neil Winget"}),
+			new StudentData({name:"Penelope Ferrera"}),
+			new StudentData({name:"Sharron Aldaco"}),
+			new StudentData({name:"Sofia Gabaldon"}),
+			new StudentData({name:"Tabatha Rogalski"}),
+			new StudentData({name:"Tania Miltenberger"}),
+			new StudentData({name:"Ted Weidenbach"})
+		]
+	}),
+	new StudentList({
+		name:"Honors Algebra",
+		slot:"6th period",
+		students: [
+			new StudentData({name:"Allyson Bottomley"}),
+			new StudentData({name:"Althea Basil"}),
+			new StudentData({name:"Annabelle Corsi"}),
+			new StudentData({name:"Clayton Chea"}),
+			new StudentData({name:"Cody Hammill"}),
+			new StudentData({name:"Emilia Treadaway"}),
+			new StudentData({name:"Jamie Valderas"}),
+			new StudentData({name:"Jeanie Wayt"}),
+			new StudentData({name:"Jerri Combest"}),
+			new StudentData({name:"Jessie Followell"}),
+			new StudentData({name:"Julio Nicolosi"}),
+			new StudentData({name:"Kelly Pelley"}),
+			new StudentData({name:"Kenya Yokum"}),
+			new StudentData({name:"Lance Ackerley"}),
+			new StudentData({name:"Loraine Rousselle"}),
+			new StudentData({name:"Lorrie Creason"}),
+			new StudentData({name:"Maricela Bloomberg"}),
+			new StudentData({name:"Melisa Brazeau"}),
+			new StudentData({name:"Odessa Dorough"}),
+			new StudentData({name:"Rosalinda Riffel"}),
+			new StudentData({name:"Roslyn Magno"}),
+			new StudentData({name:"Roxie Keisler"}),
+			new StudentData({name:"Sofia Barbero"})
+		]
+	})
+];
+
+</script>

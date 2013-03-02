@@ -1,0 +1,53 @@
+/*
+ * site.css
+ */
+
+body {
+	font-family:Tahoma, Geneva, sans-serif;
+	width:320px;
+}
+
+.app-frame {
+	width:320px;
+	height:480px;
+	background-color:#CCC
+}
+
+#header {
+	height:64px;
+	position:relative;
+}
+
+.session-info {
+	float:right;
+	margin-right:7px;
+	display:none;
+}
+
+#page-frame {
+	height:410px;
+}
+
+.app-panel {
+	display:none;
+}
+
+.close-box {
+	position:absolute;
+	top:3px;
+	right:3px;
+	cursor:pointer;
+}
+
+#login-panel {
+	padding-top:25px;
+}
+
+#login-panel .control-label {
+	width:70px;
+}
+
+#login-panel .controls {
+	margin-left:80px;
+}
+

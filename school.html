@@ -1,0 +1,214 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Team Player Score</title>
+
+<!--link rel="stylesheet" type="text/css" media="all" href="http://code.jquery.com/ui/1.8.19/themes/base/jquery-ui.css" /-->
+<link rel="stylesheet" type="text/css" media="all" href="css/bootstrap.css" />
+<link rel="stylesheet" type="text/css" media="all" href="css/site.css" />
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<!--script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-ui.min.js"></script-->
+<script type="text/javascript" src="js/lib/bootstrap.js"></script>
+<script type="text/javascript" src="js/lib/jquery.textchange.min.js"></script>
+<script type="text/javascript" src="js/lib/util.js"></script>
+<script type="text/javascript" src="js/data/models.js"></script>
+<!--script type="text/javascript" src="js/jquery.json-2.3.min.js"></script>
+<script type="text/javascript" src="js/jquery.cookie.js"></script-->
+
+<meta name="viewport" content="width=320" />
+
+</head>
+
+<body>
+<div class="app-frame">
+
+	<div id="header">
+    	<img src="img/logo-sm.png" style="display:inline-block"/>
+        <div class="session-info">
+        	<div style="display:inline-block; margin-right:18px">
+                <div class="user-name" style="font-weight:bold"></div>
+                <div class="class-name"></div>
+                <div class="class-slot"></div>
+            </div>
+        	<div class="close-box">
+		    	<img src="img/cross.png"/>
+            </div>
+		</div>
+    </div>
+    
+    <div id="page-frame">
+    	<div id="login-panel" class="app-panel">
+            <div style="position:relative">
+                <form class="form-horizontal">
+                  <div class="control-group">
+                    <label class="control-label" for="inputLogin">Login</label>
+                    <div class="controls">
+                      <input type="text" id="inputLogin">
+                    </div>
+                  </div>
+                  <div class="control-group">
+                    <label class="control-label" for="inputPassword">Password</label>
+                    <div class="controls">
+                      <input type="password" id="inputPassword">
+                    </div>
+                  </div>
+                </form>
+              <div style="text-align:right; margin-right:21px">
+                <button class="btn btn-info login-btn" style="width:90px" disabled="disabled">Log In</button>
+              </div>
+            </div>
+        </div>
+    	<div id="class-panel" class="app-panel"></div>
+    	<div id="teacher-panel" class="app-panel"></div>
+    	<div id="student-panel" class="app-panel"></div>
+    	<div id="parent-panel" class="app-panel"></div>
+    </div>
+</div>
+
+<script>
+
+SchoolModule.prototype = new EventTarget();
+SchoolModule.prototype.constructor = SchoolModule;
+
+// events fired by this object
+SchoolModule.UPDATE_CLASS_UI = "UpdateClassUI";	// { name:String, slot:String }
+
+function SchoolModule() {
+	EventTarget.call(this);
+
+	this.modules = {};
+
+	var self = this;
+	
+	// load the class module, followed by the teacher module
+	$('#class-panel').load('class.html', function() {
+		var classModule = new ClassModule();
+		self.modules["class"] = classModule;
+		classModule.addListener(SchoolModule.UPDATE_CLASS_UI, onUpdateClassUI);
+		classModule.addListener(ClassModule.CLASS_SELECTED, onClassSelected);
+		classModule.addListener(ClassModule.SCORE_STUDENT, onTeacherScoreStudent);
+		
+		$('#teacher-panel').load('teacher.html', function() {
+			var teacherModule = new TeacherModule();
+			self.modules["teacher"] = teacherModule;
+			teacherModule.addListener(TeacherModule.TEACHER_SCORE_BACK, onTeacherScoreBack);
+			teacherModule.addListener(TeacherModule.TEACHER_STUDENT_SCORED, onTeacherStudentScored);
+		});
+	});
+	
+	$('#student-panel').load('student.html', function() {
+		var newModule = new StudentModule();
+		self.modules["student"] = newModule;
+		newModule.addListener(SchoolModule.UPDATE_CLASS_UI, onUpdateClassUI);
+	});
+	
+	$('#parent-panel').load('parent.html', function() {
+		var newModule = new ParentModule();
+		self.modules["parent"] = newModule;
+	});
+	
+	$("#inputLogin").bind('textchange', function (event, previousText) { setupLoginUI() });
+	$("#inputLogin").keyup(function(e) { if (e.keyCode === 13) { $("#inputPassword").focus(); } });
+	$("#inputPassword").bind('textchange', function (event, previousText) { setupLoginUI() });
+	$("#inputPassword").keyup(function(e) { if (e.keyCode === 13) { doLogin(); } });
+	$("#login-panel .login-btn").click(doLogin);
+	$("#header .close-box").click(doLogout);
+	switchToPanel($('#login-panel'));
+	setupLoginUI();
+	
+	function switchToPanel($panel) {
+		$(".app-panel").hide();
+		$panel.show();
+	}
+	
+	function setupLoginUI() {
+		if ($("#inputLogin").val().length > 0 && $("#inputPassword").val().length > 0)
+			$("#login-panel .login-btn").removeAttr("disabled");
+		else
+			$("#login-panel .login-btn").attr("disabled", "disabled");
+		if ($("#inputLogin").val().length == 0 && $("#inputPassword").val().length == 0)
+			$("#inputLogin").focus();
+	}
+
+	function doLogin() {
+		if ($("#login-panel .login-btn").attr("disabled") != "disabled") {
+			var login = $("#inputLogin").val().toLowerCase();
+			var username;
+			if (login == "annie") {
+				var student = classes[0].students[0];
+				student.classes = [{name:"Pre-algebra", slot:"2nd Period"}];
+				self.modules["student"].loadStudent(student);
+				username = student.name;
+				switchToPanel($('#student-panel'));
+			} else if (login == "max") {
+				username = "Maxwell Vince";
+				switchToPanel($('#parent-panel'));
+			} else if (login == "david") {
+				username = "DK Sweet";
+				// load the initial class data and display the class UI
+				self.modules["class"].loadClass(0);
+				switchToPanel($('#class-panel'));
+			}
+			if (username.length > 0) {
+				$("#header .session-info").show();
+				$("#header .user-name").text(username);
+			}
+		}
+	}
+
+	function doLogout() {
+		$("#header .session-info").hide();
+		$("#inputLogin").val("");
+		$("#inputPassword").val("");
+		switchToPanel($('#login-panel'));
+		setupLoginUI();
+	}
+	
+	function onClassSelected(e) {
+		onUpdateClassUI({className:e.classData.name, classSlot:e.classData.slot});
+		self.modules["teacher"].setStudentList(e.classData);
+	}
+	
+	function onTeacherScoreBack(e) {
+		switchToPanel($('#class-panel'));
+	}
+	
+	function onTeacherScoreNext(e) {
+		var cMod = self.modules["class"];
+		if (cMod.selectedClass && cMod.selectedClass.students) {
+			var index = $.inArray(cMod.selectedStudent, cMod.selectedClass.students);
+			if (index >= 0 && index < cMod.selectedClass.students.length - 1) {
+				var student = cMod.selectedClass.students[index + 1];
+				cMod.selectStudent(student);
+				self.modules["teacher"].scoreStudent(student, index >= cMod.selectedClass.students.length - 2);
+			}
+		}
+	}
+	
+	function onTeacherScoreStudent(e) {
+		self.modules["teacher"].scoreStudent(e.student);
+		switchToPanel($('#teacher-panel'));
+	}
+	
+	function onTeacherStudentScored(e) {
+		e.student.setStatus("scored");
+	}
+	
+	function onUpdateClassUI(e) {
+		$("#header .class-name").text(e.className);
+		$("#header .class-slot").text(e.classSlot);
+	}
+};
+
+var theSchoolApp;
+
+$(function() {
+	theSchoolApp = new SchoolModule();
+});
+</script>
+
+</body>
+</html>
