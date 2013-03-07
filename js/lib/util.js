@@ -134,13 +134,26 @@ function strEndsWith(str, suffix) {
     return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 
-if(typeof String.prototype.trim !== 'function') {
+if (typeof String.prototype.trim !== 'function') {
   // ie8 bug - String doesn't have trim
   String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g, ''); 
   }
 }
 
+/**
+* Format date as a string
+* @param date - a date object (usually "new Date();")
+* @param format - a string format, eg. "DD-MM-YYYY"
+* @see http://stackoverflow.com/questions/1056728/formatting-a-date-in-javascript
+*/
+function dateFormat(date, format) {
+    // Calculate date parts and replace instances in format string accordingly
+    format = format.replace("DD", (date.getDate() < 10 ? '0' : '') + date.getDate()); // Pad with '0' if needed
+    format = format.replace("MM", (date.getMonth() < 9 ? '0' : '') + (date.getMonth() + 1)); // Months are zero-based
+    format = format.replace("YYYY", date.getFullYear());
+    return format;
+}
 
 
 // Copyright (c) 2010 Nicholas C. Zakas. All rights reserved.
@@ -183,17 +196,17 @@ EventTarget.prototype = {
         }
     },
 
-	hasListener: function(type, listener) {
-        if (this._listeners[type] instanceof Array){
-            var listeners = this._listeners[type];
-            for (var i=0, len=listeners.length; i < len; i++){
-                if (listeners[i] === listener){
-                    return true;
-                }
-            }
-        }
-		return false;
-	},
+  	hasListener: function(type, listener) {
+          if (this._listeners[type] instanceof Array){
+              var listeners = this._listeners[type];
+              for (var i=0, len=listeners.length; i < len; i++){
+                  if (listeners[i] === listener){
+                      return true;
+                  }
+              }
+          }
+  		return false;
+  	},
 	
     removeListener: function(type, listener){
         if (this._listeners[type] instanceof Array){

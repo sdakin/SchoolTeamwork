@@ -87,10 +87,6 @@ button.btn {
 
 </style>
 
-</head>
-
-<body>
-
 <div class="teacher-score-row template">
     <div class="score-label"></div>
     <div class="score-cell btn-group">
@@ -106,7 +102,7 @@ button.btn {
         <div class="well well-small student-info">
           <div>
             <div class="student-name"></div>
-            <div>Date: 10/20/2012</div>
+            <div>Date: <span class="current-date"></span></div>
           </div>
         </div>
         
@@ -173,44 +169,43 @@ function TeacherModule() {
 	$($btns[2]).click(function(e) { self.studentList.nextStudent(); });
 
 	var $parent = this.getUI().find(".scores");
-	this.createScoreItem({label:"Creativity", parent:$parent});
-	this.createScoreItem({label:"Collaboration", parent:$parent});
-	this.createScoreItem({label:"Likeability", parent:$parent});
-	this.createScoreItem({label:"Empathy", parent:$parent});
-	this.createScoreItem({label:"Leadership", parent:$parent});
+	createScoreItem({label:"Creativity", parent:$parent});
+	createScoreItem({label:"Collaboration", parent:$parent});
+	createScoreItem({label:"Likeability", parent:$parent});
+	createScoreItem({label:"Empathy", parent:$parent});
+	createScoreItem({label:"Leadership", parent:$parent});
 
 	var $noteField = this.getUI().find("#notes textarea");
 	$noteField.bind('textchange', function (event, previousText) {
 		self.onNoteFieldChanged(event, previousText);
 	});
+	
+	function createScoreItem(spec) {
+		var $row = $(".template.teacher-score-row").clone();
+		$row.removeClass("template");
+		$row.find(".score-label").text(spec.label);
+		$row.find("button").click(handleScoreClick);
+		spec.parent.append($row);
+		
+		function handleScoreClick(event) {
+			var $group = $(this).parent();
+			$group.find("button").removeClass("btn-primary");
+			$(this).addClass("btn-primary");
+			var score = 0;
+			$.each(spec.parent.find("button"), function(index, value) {
+				if ($(value).hasClass("btn-primary"))
+					score += Number($(value).attr("value"));
+			});
+			$("#teacher-points").find(".today-score").text(score);
+			var scoreLabel = $group.prev().text();
+			self.curStudent.setScore("teacher", scoreLabel, Number(this.value));
+			self.fire({type:TeacherModule.TEACHER_STUDENT_SCORED, student:self.curStudent});
+		}
+	}
 }
 
 TeacherModule.prototype.getUI = function() {
 	return $("#teacher-panel .teacher-module");
-}
-	
-TeacherModule.prototype.createScoreItem = function(spec) {
-	var $row = $(".template.teacher-score-row").clone();
-	$row.removeClass("template");
-	$row.find(".score-label").text(spec.label);
-	$row.find("button").click(handleScoreClick);
-	spec.parent.append($row);
-	var self = this;
-	
-	function handleScoreClick(event) {
-		var $group = $(this).parent();
-		$group.find("button").removeClass("btn-primary");
-		$(this).addClass("btn-primary");
-		var score = 0;
-		$.each(spec.parent.find("button"), function(index, value) {
-			if ($(value).hasClass("btn-primary"))
-				score += Number($(value).attr("value"));
-		});
-		$("#teacher-points").find(".today-score").text(score);
-		var scoreLabel = $group.prev().text();
-		self.curStudent.setScore("teacher", scoreLabel, Number(this.value));
-		self.fire({type:TeacherModule.TEACHER_STUDENT_SCORED, student:self.curStudent});
-	}
 }
 
 TeacherModule.prototype.onNoteFieldChanged = function(event, previousText) {
@@ -223,7 +218,9 @@ TeacherModule.prototype.onNoteFieldChanged = function(event, previousText) {
 }
 
 TeacherModule.prototype.scoreStudent = function(student) {
-	this.getUI().find(".student-name").text(student.name);
+	var $ui = this.getUI();
+	$ui.find(".student-name").text(student.name);
+	$ui.find(".current-date").text(dateFormat(new Date(), "MM/DD/YYYY"));
 	if (this.studentList.atStart())
 		this.getUI().find(".prev-btn").attr("disabled", "disabled");
 	else
@@ -282,6 +279,3 @@ TeacherModule.prototype.setStudentList = function(newStudentList) {
 }
 
 </script>
-
-</body>
-</html>

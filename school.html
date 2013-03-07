@@ -9,12 +9,6 @@
 <link rel="stylesheet" type="text/css" media="all" href="css/site.css" />
 
 <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.5/angular.js"></script>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-
-<script type="text/javascript" src="js/lib/bootstrap.js"></script>
-<script type="text/javascript" src="js/lib/jquery.textchange.min.js"></script>
-<script type="text/javascript" src="js/lib/util.js"></script>
-<script type="text/javascript" src="js/data/models.js"></script>
 
 <meta name="viewport" content="width=320" />
 
@@ -40,8 +34,8 @@ function AppCtrl($scope) {
         <div class="session-info">
         	<div style="display:inline-block; margin-right:18px">
                 <div class="user-name" style="font-weight:bold">{{user.username}}</div>
-                <div class="class-name"></div>
-                <div class="class-slot"></div>
+                <div class="class-name">{{classInfo.name}}</div>
+                <div class="class-slot">{{classInfo.slot}}</div>
             </div>
         	<div class="close-box">
 		    	<img src="img/cross.png"/>
@@ -78,21 +72,29 @@ function AppCtrl($scope) {
     </div>
 </div>
 
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript" src="jsx/bootstrap.js"></script>
+<script type="text/javascript" src="jsx/jquery.textchange.min.js"></script>
+<script type="text/javascript" src="js/lib/util.js"></script>
+<script type="text/javascript" src="js/data/models.js"></script>
+
 <script>
 
-SchoolModule.prototype = new EventTarget();
-SchoolModule.prototype.constructor = SchoolModule;
-
-// events fired by this object
-SchoolModule.UPDATE_CLASS_UI = "UpdateClassUI";	// { name:String, slot:String }
-
+/**
+ * The main module for the Team Player Score application. This module manages
+ * all of the other submodules in the application.
+ *
+ * @class SchoolModule
+ * @extends EventTarget
+ * @constructor
+ */
 function SchoolModule() {
 	EventTarget.call(this);
 
 	this.modules = {};
 
 	var self = this;
-	
+
 	// load the class module, followed by the teacher module
 	$('#class-panel').load('class.html', function() {
 		var classModule = new ClassModule();
@@ -128,7 +130,7 @@ function SchoolModule() {
 	$("#header .close-box").click(doLogout);
 	switchToPanel($('#login-panel'));
 	setupLoginUI();
-	
+
 	function switchToPanel($panel) {
 		$(".app-panel").hide();
 		$panel.show();
@@ -166,8 +168,8 @@ function SchoolModule() {
 				var loginScope = angular.element($("#login-panel")[0]).scope();
 				loginScope.$apply(function(scope) {
 					scope.doLogin(username)
+					$("#header .session-info").show();
 				});
-				$("#header .session-info").show();
 			}
 		}
 	}
@@ -207,14 +209,27 @@ function SchoolModule() {
 	}
 	
 	function onTeacherStudentScored(e) {
+		console.log("TODO: send score to server");
 		e.student.setStatus("scored");
 	}
 	
 	function onUpdateClassUI(e) {
-		$("#header .class-name").text(e.className);
-		$("#header .class-slot").text(e.classSlot);
+		var headerScope = angular.element($("#header")[0]).scope();
+		headerScope.$apply(function(scope) {
+			scope.classInfo.name = e.className;
+			scope.classInfo.slot = e.classSlot;
+		});
 	}
 };
+
+SchoolModule.prototype = new EventTarget();
+SchoolModule.prototype.constructor = SchoolModule;
+
+/**
+ * @event UPDATE_CLASS_UI
+ * @param { name:String, slot:String }
+ */
+SchoolModule.UPDATE_CLASS_UI = "UpdateClassUI";	// { name:String, slot:String }
 
 var theSchoolApp;
 
