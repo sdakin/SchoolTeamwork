@@ -1,20 +1,103 @@
-//-------------------------------------------------------
-// StudentData object
+//---------------------------------
+/**
+ * Base class for all users of the TPS app.
+ *
+ * @class UserData
+ * @extends EventTarget
+ * @constructor
+ */
+function UserData(spec) {
+	EventTarget.call(this);
+	
+	if (spec)
+		$.extend(this, spec);
+	if (!this.hasOwnProperty("displayName"))
+		this.displayName = this.username;
+}
+
+UserData.prototype = new EventTarget();
+UserData.prototype.constructor = UserData;
+
+UserData.PARENT_ROLE = "parent";
+UserData.STUDENT_ROLE = "student";
+UserData.TEACHER_ROLE = "teacher";
+
+
+//---------------------------------
+/**
+ * Class for storing teacher-specific information.
+ *
+ * @class TeacherData
+ * @extends UserData
+ * @constructor
+ */
+function TeacherData(spec) {
+	spec.role = UserData.TEACHER_ROLE;
+	UserData.call(this, spec);
+
+	// classes in an array of ClassData objects
+	this.classes = [];
+}
+
+TeacherData.prototype = new EventTarget();
+TeacherData.prototype.constructor = TeacherData;
+
+
+//---------------------------------
+/**
+ * Class for storing parent-specific information.
+ *
+ * @class ParentData
+ * @extends UserData
+ * @constructor
+ */
+function ParentData(spec) {
+	spec.role = UserData.PARENT_ROLE;
+	UserData.call(this, spec);
+}
+
+ParentData.prototype = new EventTarget();
+ParentData.prototype.constructor = ParentData;
+
+
+//---------------------------------
+/**
+ * Class for storing student-specific information.
+ *
+ * @class StudentData
+ * @extends UserData
+ * @constructor
+ */
+function StudentData(spec) {
+	spec.role = UserData.STUDENT_ROLE;
+	UserData.call(this, spec);
+
+	/**
+	 * The unique ID of this student.
+	 * @property studentID
+	 * @type String
+	 */
+	this.studentID = null;
+
+	/**
+	 * An object that holds the scores for this student,
+	 * indexed by: [future: class, date,] role and category.
+	 * @property scores
+	 * @type Array
+	 */
+	this.scores = {};
+}
 
 StudentData.prototype = new EventTarget();
 StudentData.prototype.constructor = StudentData;
 
-// events fired by this object
+/**
+ * Triggered whenever a student data object changes.
+ *
+ * @event STUDENT_CHANGED
+ * @param { name:String, slot:String }
+ */
 StudentData.STUDENT_CHANGED = "StudentChanged";
-
-function StudentData(spec) {
-	EventTarget.call(this);
-	
-	// the scores object is indexed by: [future: class, date,] role and category
-	this.scores = {};
-	for (var prop in spec)
-		this[prop] = spec[prop];
-}
 
 StudentData.prototype.getNote = function() {
 	return this.note;
