@@ -10,7 +10,7 @@ class DBObject {
 	public $exists;
 	
 	//-------------------------------------------------------------------------
-	// private interface
+	// public interface
 	
 	function __construct($initData) {
 		$this->data = $initData;
@@ -26,7 +26,7 @@ class DBManager {
 	private $columns;
 	
 	//-------------------------------------------------------------------------
-	// private interface
+	// public interface
 	
 	function __construct($initTableName) {
 		$this->dbo = dboConnect();
@@ -40,7 +40,8 @@ class DBManager {
 			$exists = false;
 			$info = $this->getWhereClauseInfo($obj, $keyColumns);
 			if (strlen($info->whereClause) > 0) {
-				$statement = $this->dbo->prepare("SELECT COUNT(*) FROM " . $this->tableName . " WHERE " . $info->whereClause);
+				$statement = $this->dbo->prepare("SELECT COUNT(*) FROM " . $this->tableName . 
+													" WHERE " . $info->whereClause);
 				$statement->execute($info->params);
 				$exists = $statement->fetchColumn() > 0;
 			}

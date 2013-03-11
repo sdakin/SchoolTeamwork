@@ -93,10 +93,23 @@ function AppCtrl($scope) {
 <script type="text/javascript" src="jsx/bootstrap.js"></script>
 <script type="text/javascript" src="jsx/jquery.textchange.min.js"></script>
 <script type="text/javascript" src="js/lib/util.js"></script>
+<script type="text/javascript" src="js/lib/ChangeManager.js"></script>
 <script type="text/javascript" src="js/data/models.js"></script>
 <script type="text/javascript" src="js/data/wsapi.js"></script>
 
 <script>
+
+function ScoreManager() {
+	ChangeManager.call(this);
+}
+
+ScoreManager.prototype = new ChangeManager();
+ScoreManager.prototype.constructor = ScoreManager;
+
+ScoreManager.prototype.sendChanges = function(changes, pendingCount) {
+	debugger;
+}
+
 
 /**
  * The main module for the Team Player Score application. This module manages
@@ -109,7 +122,13 @@ function AppCtrl($scope) {
 function SchoolModule() {
 	EventTarget.call(this);
 
+	/**
+	 * An object hash of application modules.
+	 * @property {Object} modules
+	 */
 	this.modules = {};
+
+	this.scoreManager = new ScoreManager();
 
 	var self = this;
 
@@ -220,7 +239,30 @@ function SchoolModule() {
 	}
 	
 	function onTeacherStudentScored(e) {
-		console.log("TODO: send score to server");
+		if (e.student.id) {
+			debugger;
+			var categories = WSAPI.getScoreCategories();
+			for (var prop in e.student.scores.teacher) {
+				var scoreData = {};
+				scoreData.scoreDate = dateFormat(new Date(), "YYYYMMDD");
+				scoreData.scorerID = "id";
+				scoreData.scoreeID = e.student.id;
+				scoreData.categoryID = prop;
+				scoreData.score = e.student.scores.teacher[prop];
+				
+				// the score ID has the following format:
+				//		<scoreDate>-<scorerID>-<scoreeID>-<categoryID>
+				scoreData.id = scoreData.scoreDate + "-";
+				scoreData.id += "id" + "-";
+				scoreData.id += e.student.id + "-";
+				scoreData.id += prop;
+
+				// TODO: construct proper score data object
+				self.scoreManager.addChange(new ChangeObject(scoreData));
+			}
+		}
+		else
+			console.log("*** No student ID for student:" + e.student.name);
 		e.student.setStatus("scored");
 	}
 	

@@ -3,6 +3,14 @@
  *
  * @module WSAPI
  */
+
+ /**
+  * The Web Service API wrapper class. The WSAPI methods are accessed
+  * via this class as top-level (not prototype) properties.
+  *
+  * @class WSAPI
+  * @constructor
+  */
  function WSAPI() {
  }
 
@@ -47,4 +55,20 @@ WSAPI.login = function(username, password) {
 	promise.resolve(newUser);
 
 	return promise;
+}
+
+/**
+ * Returns an array of category objects to be scored.
+ *
+ * @method getScoreCategories
+ * @return {Array} the categories to be scored - format: {name: <category name>, id: <category ID>}.
+ */
+WSAPI.getScoreCategories = function() {
+	return [
+		{name:"Creativity", id:1},
+		{name:"Collaboration", id:2},
+		{name:"Likeability", id:3},
+		{name:"Empathy", id:4},
+		{name:"Leadership", id:5}
+	];
 }

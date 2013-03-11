@@ -8,6 +8,13 @@
  */
 function UserData(spec) {
 	EventTarget.call(this);
+
+	/**
+	 * The unique ID of this user.
+	 * @property id
+	 * @type Number
+	 */
+	this.id;
 	
 	if (spec)
 		$.extend(this, spec);
@@ -39,7 +46,7 @@ function TeacherData(spec) {
 	this.classes = [];
 }
 
-TeacherData.prototype = new EventTarget();
+TeacherData.prototype = new UserData();
 TeacherData.prototype.constructor = TeacherData;
 
 
@@ -56,7 +63,7 @@ function ParentData(spec) {
 	UserData.call(this, spec);
 }
 
-ParentData.prototype = new EventTarget();
+ParentData.prototype = new UserData();
 ParentData.prototype.constructor = ParentData;
 
 
@@ -73,13 +80,6 @@ function StudentData(spec) {
 	UserData.call(this, spec);
 
 	/**
-	 * The unique ID of this student.
-	 * @property studentID
-	 * @type String
-	 */
-	this.studentID = null;
-
-	/**
 	 * An object that holds the scores for this student,
 	 * indexed by: [future: class, date,] role and category.
 	 * @property scores
@@ -88,7 +88,7 @@ function StudentData(spec) {
 	this.scores = {};
 }
 
-StudentData.prototype = new EventTarget();
+StudentData.prototype = new UserData();
 StudentData.prototype.constructor = StudentData;
 
 /**

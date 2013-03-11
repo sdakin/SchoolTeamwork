@@ -15,10 +15,10 @@
  *
  * @class ChangeObject
  * @constructor
- * @param spec a hash that is used to initialize this ChangeObject
+ * @param {Object} data the data contained in this ChangeObject.
  */
-function ChangeObject(spec) {
-	$.extend(this, spec);
+function ChangeObject(data) {
+	this.data = data;
 }
 
 /**
@@ -29,7 +29,7 @@ function ChangeObject(spec) {
  * @method getID
  * @return the id property of this ChangeObject
  */
-ChangeObject.prototype.getID = function() { return this.id; }
+ChangeObject.prototype.getID = function() { return this.data.id; }
 
 
 /**
@@ -94,8 +94,16 @@ function ChangeManager() {
 ChangeManager.prototype = new EventTarget();
 ChangeManager.prototype.constructor = ChangeManager;
 
-// events fired by this object
+/**
+ * Sent when one or more changes are queued.
+ * @event CHANGES_QUEUED
+ */
 ChangeManager.CHANGES_QUEUED = "ChangesQueued";		// { count: Number }
+
+/**
+ * Sent when changes are ready to be persisted.
+ * @event SEND_CHANGES
+ */
 ChangeManager.SEND_CHANGES = "SendChanges";			// { changes: [ {}, ... ], pendingCount: Number }
 
 // ChangeManager object properties
@@ -103,8 +111,13 @@ ChangeManager.prototype.checkDelay = 1000;
 ChangeManager.prototype.sendDelay = 5000;
 ChangeManager.prototype.maxSendDelay = 30000;
 
-// Adds a change to the queue or updates one if it's already in the queue
-// and then fires a CHANGES_QUEUED event.
+/**
+ * Adds a change to the queue or updates one if it's already in the queue
+ * and then fires a CHANGES_QUEUED event.
+ *
+ * @method addChange
+ * @param {ChangeObject} changeObj the change object to add to the queue.
+ */
 ChangeManager.prototype.addChange = function(changeObj) {
 	var objID = changeObj.getID();
 	console.log("queueing change with ID: " + objID + " at: " + new Date().getTime());
