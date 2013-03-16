@@ -35,6 +35,7 @@ function AppCtrl($scope) {
 		else
 			console.error("unable to determine panel from user");
 		$("#header .session-info").show();
+		logEvent($.cookie('uid'), "navigation", "login", $scope.user.username);
 	};
 
 	$scope.showPanel = function($panel) {
@@ -91,6 +92,8 @@ function AppCtrl($scope) {
 
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
 <script type="text/javascript" src="jsx/bootstrap.js"></script>
+<script type="text/javascript" src="jsx/jquery.cookie.js"></script>
+<script type="text/javascript" src="jsx/jquery.json-2.3.min.js"></script>
 <script type="text/javascript" src="jsx/jquery.textchange.min.js"></script>
 <script type="text/javascript" src="js/lib/util.js"></script>
 <script type="text/javascript" src="js/lib/ChangeManager.js"></script>
@@ -252,6 +255,7 @@ function SchoolModule() {
 				
 				// the score ID has the following format:
 				//		<scoreDate>-<scorerID>-<scoreeID>-<categoryID>
+				debugger;
 				scoreData.id = scoreData.scoreDate + "-";
 				scoreData.id += "id" + "-";
 				scoreData.id += e.student.id + "-";
@@ -284,11 +288,13 @@ SchoolModule.prototype.constructor = SchoolModule;
  */
 SchoolModule.UPDATE_CLASS_UI = "UpdateClassUI";	// { name:String, slot:String }
 
+var gAppPath = "/apps/tps/";
 var theSchoolApp;
 
 $(function() {
 	theSchoolApp = new SchoolModule();
 });
+
 </script>
 
 </body>

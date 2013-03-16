@@ -19,9 +19,9 @@ function getQueryParams(qs) {
 
 function getBaseURL() {
 	if (isSandbox())
-		return "http://" + document.location.host + "/sandbox/";
+		return "http://" + document.location.host + "/sandbox" + gAppPath;
 	else
-		return "http://" + document.location.host + "/";
+		return "http://" + document.location.host + gAppPath;
 }
 
 function isSandbox() {
@@ -55,16 +55,14 @@ function debugErrorAlert(errorString) {
 }
 
 
-function logEvent(gaq, visitorID, category, action, label, value, count, callback) {
+function logEvent(visitorID, category, action, label, value, count, callback) {
 	function handleLogEventResponse(json) {
 		if (callback) {
 			callback(json);
 		}
 	};
 	
-	if ($.cookie('pagePath'))
-		category = $.cookie('pagePath') + category;
-	if (gaq) {
+	if (typeof gaq !== "undefined") {
 		var gLabel = "(" + visitorID + ") " + label;
 		gaq.push(['_trackEvent', category, action, gLabel, value, count]);
 	}

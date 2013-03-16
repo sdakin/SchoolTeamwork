@@ -2,7 +2,7 @@
 
 header("Cache-Control: max-age=0, must-revalidate");
 
-require 'inc/events.php';
+require 'inc/analytics.php';
 
 $input = (get_magic_quotes_gpc() ? stripslashes($_POST["data"]) : $_POST["data"]);
 $eventData = json_decode($input);
