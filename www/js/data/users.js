@@ -29,6 +29,12 @@ UserData.PARENT_ROLE = "parent";
 UserData.STUDENT_ROLE = "student";
 UserData.TEACHER_ROLE = "teacher";
 
+/**
+ * Accessor for retrieving the userID.
+ * @return {Number} The userID.
+ */
+UserData.prototype.getUserID = function() { return this.id }
+
 
 //---------------------------------
 /**

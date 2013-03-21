@@ -2,10 +2,10 @@
   "name": "Team Player Score",
   "description": "Team Player Score API Docs",
   "version": "0.1",
-  "logo": "../../img/logo-sm.png",
+  "logo": "../../www/img/logo-sm.png",
   "options": {
     "paths": [
-      "./js"
+      "./www"
     ],
     "outdir": "./docs/api"
   }

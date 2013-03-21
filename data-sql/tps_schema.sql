@@ -44,17 +44,14 @@ CREATE TABLE categories (
 );
 
 
-# id: <scoreDate>-<scorerID>-<scoreeID>-<categoryID>
-CREATE TABLE categoryScores (
-	id 			INT 	NOT NULL,
-	scoreDate   DATE    NOT NULL,
-	scorerID    INT     NOT NULL,
-	scoreeID    INT     NOT NULL,
-	categoryID  INT     NOT NULL,
-	score       INT     NOT NULL,
-	note        TEXT,
+CREATE TABLE scores (
+	scoreDate   DATE         NOT NULL,
+	scorerID    INT          NOT NULL,
+	scoreeID    INT          NOT NULL,
+	scoreData   TEXT         NOT NULL,
+	note        TEXT         NULL,
 	
-	PRIMARY KEY (id)
+	PRIMARY KEY (scoreDate, scorerID, scoreeID)
 );
 
 

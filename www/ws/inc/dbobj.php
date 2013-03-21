@@ -53,11 +53,10 @@ class DBManager {
 	public function saveObject($obj, $keyColumns) {
 		$result->status = 500;		// assume failure
 		
-		if (!isset($this->columns)) $this->loadColumns();
-		
+		if (!isset($this->columns))
+			$this->loadColumns();
 		if (!isset($obj->exists))
 			$this->objectExists($obj, $keyColumns);
-		$exists = $obj->exists;
 		
 		// set up the data to be saved
 		$setClause = "";
@@ -74,7 +73,7 @@ class DBManager {
 		// prepare and execute the sql statement
 		$sql = "";
 		if (strlen($setClause) > 0) {
-			if ($exists) {
+			if ($obj->exists) {
 				$info = $this->getWhereClauseInfo($obj, $keyColumns);
 				if (strlen($info->whereClause) > 0)
 					$sql = "UPDATE " . $this->tableName . " SET " . $setClause . " WHERE " . $info->whereClause;
@@ -88,8 +87,12 @@ class DBManager {
 			$statement->execute($params);
 			if ($statement->errorCode() == 0) {
 				$result->status = 200;
-				if (!$exists)
+				if ($obj->exists) {
+					if (isset($obj->data->id))
+						$result->id = $obj->data->id;
+				} else {
 					$result->id = $this->dbo->lastInsertId();
+				}
 //				$result->sql = $sql;	// *** DEBUGGING
 			} else {
 				$result->pdoError = $statement->errorInfo();
@@ -117,7 +120,11 @@ class DBManager {
 		
 		if (isset($keyColumns)) {
 			if (is_array($keyColumns)) {
-				die("not implemented yet");
+				foreach ($keyColumns as $colName) {
+					if (strlen($result->whereClause) > 0) $result->whereClause .= " AND ";
+					$result->whereClause .= "$colName=:$colName";
+					$result->params[":$colName"] = $obj->data->$colName;
+				}
 			} else {
 				$result->whereClause = "$keyColumns=:$keyColumns";
 				$result->params[":$keyColumns"] = $obj->data->$keyColumns;
