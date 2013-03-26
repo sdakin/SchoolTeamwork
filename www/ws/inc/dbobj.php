@@ -87,10 +87,9 @@ class DBManager {
 			$statement->execute($params);
 			if ($statement->errorCode() == 0) {
 				$result->status = 200;
-				if ($obj->exists) {
-					if (isset($obj->data->id))
-						$result->id = $obj->data->id;
-				} else {
+				if (isset($obj->data->id))
+					$result->id = $obj->data->id;
+				if (!$obj->exists && !isset($result->id)) {
 					$result->id = $this->dbo->lastInsertId();
 				}
 //				$result->sql = $sql;	// *** DEBUGGING

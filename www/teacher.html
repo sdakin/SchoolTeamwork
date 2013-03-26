@@ -85,6 +85,10 @@ button.btn {
 	display:none;
 }
 
+.date-display {
+	cursor:default;
+}
+
 </style>
 
 <div class="teacher-score-row template">
@@ -102,7 +106,12 @@ button.btn {
         <div class="well well-small student-info">
           <div>
             <div class="student-name"></div>
-            <div>Date: <span class="current-date"></span></div>
+            <div class="date-display">
+            	<span class="current-date"></span>
+            	<img src="img/calendar.png"/>
+            	<img class="imgLink" src="img/arrow_left.png"/>
+            	<img class="imgLink" src="img/arrow_right.png"/>
+            </div>
           </div>
         </div>
         
@@ -145,20 +154,12 @@ button.btn {
 </div>
 
 <script>
-//-----------------------------------------------------------------------------------
-//
-// TeacherModule - manages the teacher scoring UI.
-//
-// Inherits from EventTarget
-//
-
-TeacherModule.prototype = new EventTarget();
-TeacherModule.prototype.constructor = TeacherModule;
-
-// events fired by this object
-TeacherModule.TEACHER_SCORE_BACK = "TeacherScoreBack";
-TeacherModule.TEACHER_STUDENT_SCORED = "TeacherStudentScored";	// {student:Object}
-
+/**
+ * Manages the teacher scoring UI.
+ *
+ * @class TeacherModule
+ * @extends EventTarget
+ */
 function TeacherModule() {
 	EventTarget.call(this);
 	
@@ -179,7 +180,15 @@ function TeacherModule() {
 	$noteField.bind('textchange', function (event, previousText) {
 		self.onNoteFieldChanged(event, previousText);
 	});
-	
+
+	var $dateButtons = $(".teacher-module .date-display img");
+	$($dateButtons[1]).click(function() {theSchoolApp.appData.adjustDate(-1)});
+	$($dateButtons[2]).click(function() {theSchoolApp.appData.adjustDate(1)});
+	theSchoolApp.appData.addListener(AppData.CURRENT_DATE_CHANGED,
+		function(e) {
+			self.updateDate(e.date);
+		});
+
 	function createScoreItem(spec) {
 		var $row = $(".template.teacher-score-row").clone();
 		$row.removeClass("template");
@@ -204,6 +213,13 @@ function TeacherModule() {
 	}
 }
 
+TeacherModule.prototype = new EventTarget();
+TeacherModule.prototype.constructor = TeacherModule;
+
+// events fired by this object
+TeacherModule.TEACHER_SCORE_BACK = "TeacherScoreBack";
+TeacherModule.TEACHER_STUDENT_SCORED = "TeacherStudentScored";	// {student:Object}
+
 TeacherModule.prototype.getUI = function() {
 	return $("#teacher-panel .teacher-module");
 }
@@ -220,7 +236,7 @@ TeacherModule.prototype.onNoteFieldChanged = function(event, previousText) {
 TeacherModule.prototype.scoreStudent = function(student) {
 	var $ui = this.getUI();
 	$ui.find(".student-name").text(student.name);
-	$ui.find(".current-date").text(dateFormat(new Date(), "MM/DD/YYYY"));
+	this.updateDate(theSchoolApp.appData.getCurrentDate());
 	if (this.studentList.atStart())
 		this.getUI().find(".prev-btn").attr("disabled", "disabled");
 	else
@@ -276,6 +292,10 @@ TeacherModule.prototype.setStudentList = function(newStudentList) {
 			self.scoreStudent(curStudent);
 		}
 	}
+}
+
+TeacherModule.prototype.updateDate = function(date) {
+	this.getUI().find(".current-date").text(dateFormat(date, "MM/DD/YYYY"));
 }
 
 </script>

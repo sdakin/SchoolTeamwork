@@ -160,7 +160,7 @@ ChangeManager.prototype.checkChanges = function () {
 					// objects to send (i.e., in progress); if so then replace it
 					var inQueue = false;
 					$.each(self.changesToSend, function(index, value) {
-						if (value.id == changeObj.id) {
+						if (value.getID() == changeObj.getID()) {
 							self.changesToSend[index] = changeObj;
 							inQueue = true;
 							return false;

@@ -130,22 +130,22 @@ StudentData.prototype.setStatus = function(newStatus) {
 }
 
 
-//-------------------------------------------------------
-// StudentList object
+/**
+ * @class StudentList
+ * @extends EventTarget
+ */
+function StudentList(spec) {
+	EventTarget.call(this);
+	
+	$.extend(this, spec);
+	this.curStudentIndex = (this.students && this.students.length > 0 ? 0 : -1);
+}
 
 StudentList.prototype = new EventTarget();
 StudentList.prototype.constructor = StudentList;
 
 // events fired by this object
 StudentList.STUDENT_LIST_CHANGED = "StudentListChanged";
-
-function StudentList(spec) {
-	EventTarget.call(this);
-	
-	for (var prop in spec)
-		this[prop] = spec[prop];
-	this.curStudentIndex = (this.students && this.students.length > 0 ? 0 : -1);
-}
 
 StudentList.prototype.atEnd = function() { return this.curStudentIndex >= this.getStudentCount() - 1 }
 StudentList.prototype.atStart = function() { return this.curStudentIndex == 0 }

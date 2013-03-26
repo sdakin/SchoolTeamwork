@@ -105,24 +105,15 @@
 </div>
 
 <script>
-//-----------------------------------------------------------------------------------
-//
-// ClassModule - represents a class run by one or more teachers containing a list
-//				 of students.
-//
-// Inherits from EventTarget
-//
-// TDOD:
-//		replace all refereces to: this.selectedStudent
-//							with: this.selectedClass.get/setCurStudentIndex()
-
-ClassModule.prototype = new EventTarget();
-ClassModule.prototype.constructor = ClassModule;
-
-// events fired by this object
-ClassModule.CLASS_SELECTED = "ClassSelected";	// { classData:{name:String, slot:String, students:Array }
-ClassModule.SCORE_STUDENT = "ScoreStudent";	// { student:Object }
-
+/**
+ * Represents a class run by one or more teachers containing a list of students.
+ *
+ * @class ClassModule
+ * @extends EventTarget
+ *
+ * TODO: replace all refereces to: this.selectedStudent
+ *							 with: this.selectedClass.get/setCurStudentIndex()
+ */
 function ClassModule() {
 	EventTarget.call(this);
 	
@@ -152,6 +143,13 @@ function ClassModule() {
 		self.selectStudent(e.target.getCurStudent());
 	}
 }
+
+ClassModule.prototype = new EventTarget();
+ClassModule.prototype.constructor = ClassModule;
+
+// events fired by this object
+ClassModule.CLASS_SELECTED = "ClassSelected";	// { classData:{name:String, slot:String, students:Array }
+ClassModule.SCORE_STUDENT = "ScoreStudent";	// { student:Object }
 
 ClassModule.prototype.addStudent = function(student) {
 	var $classList = this.getList();
@@ -248,30 +246,30 @@ var classes = [
 		slot:"2nd period",
 		students: [
 			new StudentData({name:"Annabelle Vince", id:2}),
-			new StudentData({name:"Brian Wollenberg"}),
-			new StudentData({name:"Clayton Matton"}),
-			new StudentData({name:"Darren Laubscher"}),
-			new StudentData({name:"Darryl Yerkes"}),
-			new StudentData({name:"Erik Whidden"}),
-			new StudentData({name:"Eve Carriere"}),
-			new StudentData({name:"Guy Delmonte"}),
-			new StudentData({name:"Jamie Demko"}),
-			new StudentData({name:"Javier Edgerly"}),
-			new StudentData({name:"Jerri Newhall"}),
-			new StudentData({name:"Kelly Rollison"}),
-			new StudentData({name:"Kurt Grignon"}),
-			new StudentData({name:"Liza Fill"}),
-			new StudentData({name:"Lonnie Bibeau"}),
-			new StudentData({name:"Mathew Denver"}),
-			new StudentData({name:"Max Gudgel"}),
-			new StudentData({name:"Nannie Haverty"}),
-			new StudentData({name:"Neil Schlicher"}),
-			new StudentData({name:"Nelson Slee"}),
-			new StudentData({name:"Noemi Crosswell"}),
-			new StudentData({name:"Sharron Herrada"}),
-			new StudentData({name:"Tabatha Duley"}),
-			new StudentData({name:"Ted Begaye"}),
-			new StudentData({name:"Tyrone Barrus"})
+			new StudentData({name:"Brian Wollenberg", id:4}),
+			new StudentData({name:"Clayton Matton", id:5}),
+			new StudentData({name:"Darren Laubscher", id:6}),
+			new StudentData({name:"Darryl Yerkes", id:7}),
+			new StudentData({name:"Erik Whidden", id:8}),
+			new StudentData({name:"Eve Carriere", id:9}),
+			new StudentData({name:"Guy Delmonte", id:10}),
+			new StudentData({name:"Jamie Demko", id:11}),
+			new StudentData({name:"Javier Edgerly", id:12}),
+			new StudentData({name:"Jerri Newhall", id:13}),
+			new StudentData({name:"Kelly Rollison", id:14}),
+			new StudentData({name:"Kurt Grignon", id:15}),
+			new StudentData({name:"Liza Fill", id:16}),
+			new StudentData({name:"Lonnie Bibeau", id:17}),
+			new StudentData({name:"Mathew Denver", id:18}),
+			new StudentData({name:"Max Gudgel", id:19}),
+			new StudentData({name:"Nannie Haverty", id:20}),
+			new StudentData({name:"Neil Schlicher", id:21}),
+			new StudentData({name:"Nelson Slee", id:22}),
+			new StudentData({name:"Noemi Crosswell", id:23}),
+			new StudentData({name:"Sharron Herrada", id:24}),
+			new StudentData({name:"Tabatha Duley", id:25}),
+			new StudentData({name:"Ted Begaye", id:26}),
+			new StudentData({name:"Tyrone Barrus", id:27})
 		]
 	}),
 	new StudentList({

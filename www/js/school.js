@@ -15,6 +15,12 @@ function SchoolModule() {
 	 */
 	this.modules = {};
 
+	/**
+	 * The application data object.
+	 * @property {AppData} appData
+	 */
+	this.appData = new AppData();
+
 	var self = this;
 
 	// load the class module, followed by the teacher module
