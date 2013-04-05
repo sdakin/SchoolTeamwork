@@ -40,9 +40,10 @@ function SchoolModule() {
 	});
 	
 	$('#student-panel').load('student.html', function() {
-		var newModule = new StudentModule();
-		self.modules["student"] = newModule;
-		newModule.addListener(SchoolModule.UPDATE_CLASS_UI, onUpdateClassUI);
+		var studentModule = new StudentModule();
+		self.modules["student"] = studentModule;
+		studentModule.addListener(SchoolModule.UPDATE_CLASS_UI, onUpdateClassUI);
+		studentModule.addListener(StudentModule.STUDENT_SCORED, onStudentScored);
 	});
 	
 	$('#parent-panel').load('parent.html', function() {
@@ -74,9 +75,15 @@ function SchoolModule() {
 	}
 
 	function doLogin() {
-		if ($("#login-panel .login-btn").attr("disabled") != "disabled") {
+		var $loginBtn = $("#login-panel .login-btn");
+		var $alert = $("#login-panel .alert");
+		if ($loginBtn.attr("disabled") != "disabled") {
+			$alert.hide();
+			$loginBtn.attr("disabled", "disabled");
 			var login = $("#inputLogin").val().toLowerCase();
-			WSAPI.login(login, null).done(function(user) {
+			var password = $("#inputPassword").val();
+			WSAPI.login(login, password)
+			.done(function(user) {
 				if (user) {
 					var loginScope = angular.element($("#login-panel")[0]).scope();
 					loginScope.$apply(function(scope) {
@@ -84,6 +91,7 @@ function SchoolModule() {
 					});
 					switch(user.role) {
 						case UserData.TEACHER_ROLE:
+							// TODO: fetch the teacher's classes and load the first one by ID
 							self.modules["class"].loadClass(0);
 							break;
 						case UserData.STUDENT_ROLE:
@@ -91,6 +99,13 @@ function SchoolModule() {
 							break;
 					}
 				}
+			})
+			.fail(function() {
+				$alert.text("Login failed.");
+				$alert.show();
+			})
+			.always(function() {
+				$loginBtn.removeAttr("disabled");
 			})
 		}
 	}
@@ -129,17 +144,26 @@ function SchoolModule() {
 		switchToPanel($('#teacher-panel'));
 	}
 	
+	function onStudentScored(e) {
+		saveScores(e.student, e.student.scores.student);
+	}
+
 	function onTeacherStudentScored(e) {
-		var userID = e.student.getUserID();
-		if (userID) {
+		saveScores(e.student, e.student.scores.teacher);
+	}
+
+	function saveScores(studentData, scoreData) {
+		var scoreeID = studentData.getUserID();
+		if (scoreeID) {
+			var classInfo = studentData.getSelectedClass();
 			var appScope = angular.element($(".app-frame")[0]).scope();
 			appScope.$apply(function(scope) {
-				scope.scoreUser(userID, e.student.scores.teacher);
+				scope.scoreUser(scoreeID, classInfo.id, scoreData);
 			});
-			e.student.setStatus("scored");
+			studentData.setStatus("scored");
 		}
 		else
-			console.log("*** No student ID for student:" + e.student.name);
+			console.log("*** No student ID for student:" + studentData.name);
 	}
 	
 	function onUpdateClassUI(e) {
@@ -156,6 +180,6 @@ SchoolModule.prototype.constructor = SchoolModule;
 
 /**
  * @event UPDATE_CLASS_UI
- * @param {name:String, slot:String}
+ * @param {Object} data `{name:String, slot:String}`
  */
 SchoolModule.UPDATE_CLASS_UI = "UpdateClassUI";	// { name:String, slot:String }

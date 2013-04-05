@@ -1,4 +1,8 @@
 /**
+ * @module Controllers
+ */
+
+/**
  * The ScoreManager extends the ChangeManger class and handles
  * score-specific change functionality for the Team Player Score app.
  *
@@ -62,9 +66,9 @@ function AppCtrl($scope) {
 		logEvent($.cookie('uid'), "navigation", "login", $scope.user.username);
 	};
 
-	$scope.scoreUser = function(scoreeID, scoreData) {
+	$scope.scoreUser = function(scoreeID, classID, scoreData) {
 		// construct a ScoreRecord and add it to the change queue
-		var scoreData = new ScoreRecord($scope.user.getUserID(), scoreeID, scoreData);
+		var scoreData = new ScoreRecord($scope.user.getUserID(), scoreeID, classID, scoreData);
 		$scope.scoreManager.addChange(scoreData);
 	}
 

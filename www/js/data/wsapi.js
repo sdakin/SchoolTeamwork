@@ -4,15 +4,6 @@
  * @module WSAPI
  */
 
- /**
-  * The Web Service API wrapper class. The WSAPI methods are accessed
-  * via this class as top-level (not prototype) properties.
-  *
-  * @class WSAPI
-  * @constructor
-  */
- function WSAPI() {
- }
 
 /**
  * A helper class to manage the collection of categories used in the
@@ -54,6 +45,16 @@ CategoryCollection.prototype.lookupCategory = function(searchCategory) {
 
 
 /**
+ * The Web Service API wrapper class. The WSAPI methods are accessed
+ * via this class as top-level (not prototype) properties.
+ *
+ * @class WSAPI
+ * @constructor
+ */
+function WSAPI() {
+}
+
+/**
  * Dummy login handler (will eventually be backed by a server-based API)
  *
  * @method login
@@ -69,30 +70,32 @@ CategoryCollection.prototype.lookupCategory = function(searchCategory) {
  */
 WSAPI.login = function(username, password) {
 	var promise = $.Deferred();
-	var userInfo = {username: username};
-	var newUser = null;
-	switch (username) {
-		case "annie":
-			userInfo.id = 2;
-			userInfo.displayName = "Annabelle Vince";
-			newUser = new StudentData(userInfo);
-			newUser.classes = [{name:"Pre-algebra", slot:"2nd Period"}];
-			break;
-		case "max":
-			userInfo.id = 3;
-			userInfo.displayName = "Maxwell Vince";
-			newUser = new ParentData(userInfo);
-			break;
-		case "david":
-			userInfo.id = 1;
-			userInfo.displayName = "DK Sweet";
-			newUser = new TeacherData(userInfo);
-			break;
-		default:
-			promise.resolve(null);
-			break;
-	}
-	promise.resolve(newUser);
+	$.post("ws/login.php", JSON.stringify({username:username, password: password}))
+	.done(function(jsonResponse) {
+		var response = JSON.parse(jsonResponse);
+		if (response.result == 200) {
+			var newUser = null;
+			switch (Number(response.userInfo.role)) {
+				case UserData.TEACHER_ROLE_NUM:
+					newUser = new TeacherData(response.userInfo);
+					break;
+				case UserData.STUDENT_ROLE_NUM:
+					newUser = new StudentData(response.userInfo);
+					// *** DEBUGGING
+					newUser.classes = [{id:1, name:"Pre-algebra", slot:"2nd Period"}];
+					break;
+				case UserData.PARENT_ROLE_NUM:
+					newUser = new ParentData(response.userInfo);
+					break;
+			}
+			if (newUser)
+				promise.resolve(newUser);
+			else
+				promise.reject();
+		} else {
+			promise.reject();
+		}
+	});
 
 	return promise;
 }

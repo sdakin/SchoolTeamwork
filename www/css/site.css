@@ -54,3 +54,7 @@ body {
 .imgLink {
 	cursor: pointer;
 }
+
+.alert-frame {
+	padding: 20px;
+}

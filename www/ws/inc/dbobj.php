@@ -50,6 +50,41 @@ class DBManager {
 		}
 	}
 	
+	// returns an array if multiple objects are found, a single object if only one
+	// object is found, or null if no objects are found.
+	public function readObjects($searchObj) {
+		$result = null;
+		$keyColumns = array();
+		if ($searchObj) {
+			foreach ($searchObj->data as $key => $value)
+	 		  $keyColumns[] = $key;
+		}
+		if (count($keyColumns) > 0) {
+			$info = $this->getWhereClauseInfo($searchObj, $keyColumns);
+			if (strlen($info->whereClause) > 0) {
+				$sql = "SELECT * FROM " . $this->tableName . " WHERE " . $info->whereClause;
+				$statement = $this->dbo->prepare($sql);
+				$statement->execute($info->params);
+			}
+		} else {	// no keyColumns results in a select all
+			$sql = "SELECT * FROM " . $this->tableName;
+			$statement = $this->dbo->prepare($sql);
+			$statement->execute();
+		}
+
+		if (isset($statement)) {
+			if ($statement->errorCode() == 0) {
+				$count = $statement->rowCount();
+				if ($count == 1) {
+					$result = $statement->fetch(PDO::FETCH_ASSOC);
+				} else if ($count > 1) {
+					$result = $statement->fetchAll(PDO::FETCH_ASSOC);
+				}
+			}
+		}
+		return $result;
+	}
+
 	public function saveObject($obj, $keyColumns) {
 		$result->status = 500;		// assume failure
 		

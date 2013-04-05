@@ -45,25 +45,32 @@ CREATE TABLE categories (
 
 
 CREATE TABLE scores (
-	scoreDate   DATE         NOT NULL,
-	scorerID    INT          NOT NULL,
-	scoreeID    INT          NOT NULL,
-	scoreData   TEXT         NOT NULL,
-	note        TEXT         NULL,
+	scoreDate   DATE        NOT NULL,
+	scorerID    INT         NOT NULL,
+	scoreeID    INT         NOT NULL,
+	classID		INT 		NOT NULL,
+	scoreData   TEXT        NOT NULL,
+	note        TEXT        NULL,
 	
-	PRIMARY KEY (scoreDate, scorerID, scoreeID)
+	PRIMARY KEY (scoreDate, scorerID, scoreeID, classID)
 );
 
 
-INSERT INTO users ('username', 'password', 'firstName', 'lastName', 'role') VALUES
+INSERT INTO users (username, password, firstName, lastName, role) VALUES
 ('david', '', 'DK', 'Sweet', 1),
 ('annie', '', 'Annabelle', 'Vince', 2),
 ('max', '', 'Maxwewll', 'Vince', 3);
 
 
-INSERT INTO categories ('name') VALUES
+INSERT INTO categories (name) VALUES
 ('Creativity'),
 ('Collaboration'),
 ('Likeability'),
 ('Empathy'),
 ('Leadership');
+
+INSERT INTO classInfo (teacherID, name, slot) VALUES
+(1, 'Pre-Algebra', '2nd period'),
+(1, 'Algebra', '3rd period'),
+(1, 'Algebra', '4th period'),
+(1, 'Honors Algebra', '6th period');

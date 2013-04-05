@@ -13,8 +13,13 @@ function AppData() {
 	 * @property {Date} currentDate
 	 */
 	this.currentDate = new Date();
-}
 
+	/**
+	 * The categories being scored in the app.
+	 * @property {CategoryCollection} scoreCategories
+	 */
+	this.scoreCategories = WSAPI.getScoreCategories();
+}
 AppData.prototype = new EventTarget();
 AppData.prototype.constructor = AppData;
 
