@@ -93,12 +93,7 @@ button.btn {
 </div>
 
 <div class="student-module">
-	<div class="date-header">
-    	<span class="current-date">today</span>
-    	<img src="img/calendar.png"/>
-    	<img class="imgLink" src="img/arrow_left.png"/>
-    	<img class="imgLink" src="img/arrow_right.png"/>
-	</div>
+	<div class="date-header">10/21/2012</div>
     <div id="student-info" class="well well-small">
       <div class="student-progress" style="display:table">
         <div style="display:table-row">
@@ -157,7 +152,7 @@ StudentModule.prototype = new EventTarget();
 StudentModule.prototype.constructor = StudentModule;
 
 // events fired by this object
-StudentModule.STUDENT_SCORED = "StudentScored";
+//StudentModule.STUDENT_SCORE_DONE = "StudentScoreDone";
 
 function StudentModule() {
 	EventTarget.call(this);
@@ -168,15 +163,8 @@ function StudentModule() {
 	createScoreItem("Likeability", $scoreItemsTable);
 	createScoreItem("Empathy", $scoreItemsTable);
 	createScoreItem("Leadership", $scoreItemsTable);
-
+	
 	var self = this;
-	var $dateButtons = $(".student-module .date-header img");
-	$($dateButtons[1]).click(function() {theSchoolApp.appData.adjustDate(-1)});
-	$($dateButtons[2]).click(function() {theSchoolApp.appData.adjustDate(1)});
-	theSchoolApp.appData.addListener(AppData.CURRENT_DATE_CHANGED, function(e) {
-		self.updateDate(e.date);
-	});
-
 	function createScoreItem(label, parent) {
 		var $row = $("#student-templates .score-row").clone();
 		$row.find(".exp-label").text(label);
@@ -189,10 +177,8 @@ function StudentModule() {
 			$(this).addClass("btn-primary");
 			var category = $group.prev().text();
 			self.student.setScore("student", category, Number($(this).attr("value")));
-			self.fire({type:StudentModule.STUDENT_SCORED, student:self.student});
 			
 			// add up the total score for today
-			debugger;
 			var score = 0;
 			$.each(parent.find("button"), function(index, value) {
 				if ($(value).hasClass("btn-primary"))
@@ -209,18 +195,10 @@ StudentModule.prototype.getUI = function() {
 
 StudentModule.prototype.loadStudent = function(student) {
 	this.student = student;
-	var selClass = student.getSelectedClass();
 	this.fire({type:SchoolModule.UPDATE_CLASS_UI, 
-			   className:selClass.name, 
-			   classSlot:selClass.slot});
-	$.get("ws/getScores.php")
-	.done(function(resp) {
-		console.log("student scores loaded...");
-		respData = JSON.parse(resp);
-		if (respData.result == 200) {
-			debugger;
-		}
-	})
+			   className:student.classes[0].name, 
+			   classSlot:student.classes[0].slot});
+	
 	var $btns = this.getUI().find(".student-scores .score-row");
 	var totalScore = 0;
 	$.each($btns, function(index, value) {
@@ -236,11 +214,6 @@ StudentModule.prototype.loadStudent = function(student) {
 		$($(value).find("button")[scoreIndex]).addClass("btn-primary");
 	});
 	this.getUI().find(".today-score").text(totalScore);
-	this.updateDate(theSchoolApp.appData.getCurrentDate());
-}
-
-StudentModule.prototype.updateDate = function(date) {
-	this.getUI().find(".current-date").text(dateFormat(date, "MM/DD/YYYY"));
 }
 
 </script>

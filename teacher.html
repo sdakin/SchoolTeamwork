@@ -1,0 +1,281 @@
+<style type="text/css">
+.teacher-module .student-info {
+	display:inline-block;
+	margin-left:7px;
+	margin-bottom:5px;
+	width:165px;
+	overflow:hidden;
+}
+
+.student-name {
+	display:table-cell;
+	font-weight:bold;
+}
+
+#teacher-points {
+	height:50px;
+	padding: 4px 7px;
+	font-size: 0.9em;
+	line-height: 15px;
+	float: right;
+	margin-right: 7px;
+	margin-bottom:5px;
+}
+
+#teacher-points .header {
+	font-weight:bold;
+	text-align:center;
+	border-bottom:solid 1px #000;
+	margin-bottom: 3px;
+}
+
+#scores {
+	display:table;
+}
+
+.score-label {
+	display:table-cell;
+	line-height:38px;
+	padding:0px 7px;
+	font-size:.95em;
+	font-weight:bold;
+}
+
+.teacher-score-row {
+	display:table-row;
+	padding:5px 0px;
+}
+
+.score-header {
+	font-size:.9em;
+	width:54px;
+	display:inline-block;
+	text-align:center;
+}
+
+.score-cell {
+	display:table-cell;
+}
+
+.student-score-indicator {
+	color: red;
+	border: 1px solid;
+	z-index: 3;
+}
+
+button.btn {
+	width:54px;
+}
+
+#notes {
+	padding-top:13px;
+	padding-left:5px;
+	position:relative;
+}
+
+#notes textarea {
+	resize:none;
+}
+
+.teacher-module>.button-bar {
+	padding-top:2px;
+}
+
+.template {
+	display:none;
+}
+
+</style>
+
+<div class="teacher-score-row template">
+    <div class="score-label"></div>
+    <div class="score-cell btn-group">
+      <button class="btn" value="0">0</button>
+      <button class="btn btn-primary" value="1">1</button>
+      <button class="btn" value="2">2</button>
+      <button class="btn" value="0">N/A</button>
+    </div>
+</div>
+
+<div class="teacher-module">
+    <div style="padding-top:8px">
+        <div class="well well-small student-info">
+          <div>
+            <div class="student-name"></div>
+            <div>Date: <span class="current-date"></span></div>
+          </div>
+        </div>
+        
+        <div id="teacher-points" class="well well-small">
+          <div class="header">Points Earned</div>
+          <div style="display:table; float:right">
+            <div style="display:table-row">
+                <div style="display:table-cell; text-align:right; padding-right:5px">Today:</div>
+                <div class="today-score" style="display:table-cell; text-align:right"></div>
+            </div>
+            <div style="display:table-row">
+                <div style="display:table-cell; text-align:right; padding-right:5px">This month:</div>
+                <div style="display:table-cell; text-align:right">250</div>
+            </div>
+          </div>
+        </div>
+    </div>
+    
+    <div class="scores">
+        <div style="display:table-row">
+            <div style="display:table-cell">&nbsp;</div>
+            <div style="display:table-cell">
+                <div class="score-header">Below</div><div class="score-header">Expected</div><div class="score-header">Above</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notes">
+        <div style="display:inline-block; padding-left:5px">Notes</div>
+        <textarea style="width:295px; max-width:295px;"></textarea>
+    </div>
+    
+    <div class="button-bar" style="padding-left:6px">
+        <div style="display:inline-block"><button class="btn btn-success" style="width:100px">Back</button></div>
+        <div style="float:right; padding-right:7px; padding-bottom:10px">
+        	<button class="btn btn-info prev-btn" style="width:90px">Previous</button>
+        	<button class="btn btn-info next-btn" style="width:90px">Next</button>
+        </div>
+    </div>
+</div>
+
+<script>
+//-----------------------------------------------------------------------------------
+//
+// TeacherModule - manages the teacher scoring UI.
+//
+// Inherits from EventTarget
+//
+
+TeacherModule.prototype = new EventTarget();
+TeacherModule.prototype.constructor = TeacherModule;
+
+// events fired by this object
+TeacherModule.TEACHER_SCORE_BACK = "TeacherScoreBack";
+TeacherModule.TEACHER_STUDENT_SCORED = "TeacherStudentScored";	// {student:Object}
+
+function TeacherModule() {
+	EventTarget.call(this);
+	
+	var $btns = this.getUI().find(".button-bar button");
+	var self = this;
+	$($btns[0]).click(function(e) { self.fire(TeacherModule.TEACHER_SCORE_BACK) } );
+	$($btns[1]).click(function(e) { self.studentList.prevStudent(); });
+	$($btns[2]).click(function(e) { self.studentList.nextStudent(); });
+
+	var $parent = this.getUI().find(".scores");
+	createScoreItem({label:"Creativity", parent:$parent});
+	createScoreItem({label:"Collaboration", parent:$parent});
+	createScoreItem({label:"Likeability", parent:$parent});
+	createScoreItem({label:"Empathy", parent:$parent});
+	createScoreItem({label:"Leadership", parent:$parent});
+
+	var $noteField = this.getUI().find("#notes textarea");
+	$noteField.bind('textchange', function (event, previousText) {
+		self.onNoteFieldChanged(event, previousText);
+	});
+	
+	function createScoreItem(spec) {
+		var $row = $(".template.teacher-score-row").clone();
+		$row.removeClass("template");
+		$row.find(".score-label").text(spec.label);
+		$row.find("button").click(handleScoreClick);
+		spec.parent.append($row);
+		
+		function handleScoreClick(event) {
+			var $group = $(this).parent();
+			$group.find("button").removeClass("btn-primary");
+			$(this).addClass("btn-primary");
+			var score = 0;
+			$.each(spec.parent.find("button"), function(index, value) {
+				if ($(value).hasClass("btn-primary"))
+					score += Number($(value).attr("value"));
+			});
+			$("#teacher-points").find(".today-score").text(score);
+			var scoreLabel = $group.prev().text();
+			self.curStudent.setScore("teacher", scoreLabel, Number(this.value));
+			self.fire({type:TeacherModule.TEACHER_STUDENT_SCORED, student:self.curStudent});
+		}
+	}
+}
+
+TeacherModule.prototype.getUI = function() {
+	return $("#teacher-panel .teacher-module");
+}
+
+TeacherModule.prototype.onNoteFieldChanged = function(event, previousText) {
+	var curStudent = this.studentList.getCurStudent();
+	if (curStudent) {
+		var $noteField = this.getUI().find("#notes textarea");
+		curStudent.setNote($noteField.val());
+		this.fire({type:TeacherModule.TEACHER_STUDENT_SCORED, student:curStudent});
+	}
+}
+
+TeacherModule.prototype.scoreStudent = function(student) {
+	var $ui = this.getUI();
+	$ui.find(".student-name").text(student.name);
+	$ui.find(".current-date").text(dateFormat(new Date(), "MM/DD/YYYY"));
+	if (this.studentList.atStart())
+		this.getUI().find(".prev-btn").attr("disabled", "disabled");
+	else
+		this.getUI().find(".prev-btn").removeAttr("disabled");
+	this.getUI().find(".next-btn").text(this.studentList.atEnd() ? "Done" : "Next");
+	this.curStudent = student;
+	
+	var $btns = this.getUI().find(".score-cell .btn");
+	$btns.removeClass("student-score-indicator");
+	$btns.removeClass("btn-primary");
+	var $labels = this.getUI().find(".score-label");
+	var rowSize = 4;
+	var totalScore = 0;
+	$.each($labels, function(index, value) {
+		var category = $(value).text();
+		
+		// update UI to reflect the student's score
+		var studentScore = student.getScore("student", category);
+		var scoreIndex;
+		if (typeof studentScore === "undefined")
+			scoreIndex = 3;
+		else {
+			scoreIndex = Number(studentScore);
+		}
+		$($btns[index * rowSize + scoreIndex]).addClass("student-score-indicator");
+		
+		// update UI to reflect the teacher's score
+		var score = student.getScore("teacher", category);
+		var scoreIndex;
+		if (typeof score === "undefined")
+			scoreIndex = 3;
+		else {
+			scoreIndex = Number(score);
+			totalScore += score;
+		}
+		$($btns[index * rowSize + scoreIndex]).addClass("btn-primary");
+	});
+	this.getUI().find(".today-score").text(totalScore);
+	var $noteField = this.getUI().find("#notes textarea");
+	$noteField.val(student.getNote());
+}
+
+TeacherModule.prototype.setStudentList = function(newStudentList) { 
+	this.studentList = newStudentList;
+	if (!this.studentList.hasListener(StudentList.STUDENT_LIST_CHANGED, onStudentListChanged)) {
+		this.studentList.addListener(StudentList.STUDENT_LIST_CHANGED, onStudentListChanged);
+	}
+	var self = this;
+	
+	function onStudentListChanged(e) {
+		var curStudent = self.studentList.getCurStudent();
+		if (curStudent) {
+			self.scoreStudent(curStudent);
+		}
+	}
+}
+
+</script>

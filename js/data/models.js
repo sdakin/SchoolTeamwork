@@ -11,25 +11,15 @@ function UserData(spec) {
 
 	/**
 	 * The unique ID of this user.
-	 * @property {Number} id
+	 * @property id
+	 * @type Number
 	 */
 	this.id;
-
-	/**
-	 * The username that is used to log in the user.
-	 * @property {String} username
-	 */
-	this.username;
-	/**
-	 * The name of the user that is displayed in the app UI.
-	 * @property {String} displayName
-	 */
-	this.displayName;
 	
 	if (spec)
 		$.extend(this, spec);
 	if (!this.hasOwnProperty("displayName"))
-		this.displayName = this.firstName + " " + this.lastName;
+		this.displayName = this.username;
 }
 
 UserData.prototype = new EventTarget();
@@ -38,16 +28,6 @@ UserData.prototype.constructor = UserData;
 UserData.PARENT_ROLE = "parent";
 UserData.STUDENT_ROLE = "student";
 UserData.TEACHER_ROLE = "teacher";
-
-UserData.PARENT_ROLE_NUM = 3;
-UserData.STUDENT_ROLE_NUM = 2;
-UserData.TEACHER_ROLE_NUM = 1;
-
-/**
- * Accessor for retrieving the userID.
- * @return {Number} The userID.
- */
-UserData.prototype.getUserID = function() { return this.id }
 
 
 //---------------------------------
@@ -94,27 +74,20 @@ ParentData.prototype.constructor = ParentData;
  * @class StudentData
  * @extends UserData
  * @constructor
- * @param {Object} spec An object used to initialize the properties in
- *	this StudentData object and its parent class.
  */
 function StudentData(spec) {
 	spec.role = UserData.STUDENT_ROLE;
 	UserData.call(this, spec);
 
 	/**
-	 * An object that holds the scores for this student, key: class, date and role,
-	 * value: data. The data is a ScoreData object.
-	 * @property {Object} scores
-	 * @example
-	 *     key:
-	 *         < classID >
-	 *             < date in YYYY-MM-DD format >
-	 *                 student|teacher (role)
-	 *     value:
-	 *         ScoreData object
+	 * An object that holds the scores for this student,
+	 * indexed by: [future: class, date,] role and category.
+	 * @property scores
+	 * @type Array
 	 */
 	this.scores = {};
 }
+
 StudentData.prototype = new UserData();
 StudentData.prototype.constructor = StudentData;
 
@@ -130,42 +103,19 @@ StudentData.prototype.getNote = function() {
 	return this.note;
 }
 
-StudentData.prototype.getSelectedClass = function() {
-	// TODO: need to support selecting classes
-	return this.classes[0];
-}
-
 StudentData.prototype.getScore = function(role, category) {
-	debugger;
 	if (typeof this.scores[role] === "undefined")
 		this.scores[role] = {};
 	return this.scores[role][category];
 }
 
-StudentData.prototype.isScored = function() {
-	// TODO: need to check for an existing score for the app's current date
-	return this.status == "scored";
-}
-
 StudentData.prototype.setNote = function(newNote) {
-	debugger;
 	this.note = newNote;
 	this.fire(StudentData.STUDENT_CHANGED);
 }
 
-StudentData.prototype.setScore = function(role, categoryID, scoreValue) {
-	debugger;
-	var classID = this.getSelectedClass().id;
-	var dateStr = dateFormat(theSchoolApp.appData.getCurrentDate(), "YYYY-MM-DD");
-	if (!this.scores[classID]) this.scores[classID] = {};
-	if (!this.scores[classID][dateStr]) this.scores[classID][dateStr] = {};
-	if (!this.scores[classID][dateStr][role]) this.scores[classID][dateStr][role] = {};
-	var scoreData = this.scores[classID][dateStr][role];
-	if (!scoreData) {
-		scoreData = new ScoreData();
-		this.scores[classID][dateStr][role] = scoreData;
-	}
-	scoreData.setScoreValue(categoryID, scoreValue);
+StudentData.prototype.setScore = function(role, category, scoreValue) {
+	this.scores[role][category] = scoreValue;
 }
 
 StudentData.prototype.setStatus = function(newStatus) {
@@ -174,54 +124,22 @@ StudentData.prototype.setStatus = function(newStatus) {
 }
 
 
-/**
- * @class StudentList
- * @extends EventTarget
- */
-function StudentList(spec) {
-	EventTarget.call(this);
-	
-	$.extend(this, spec);
-
-	/**
-	 * The name of the class to which this student list corresponds.
-	 * @property {String} name
-	 */
-	this.name;
-	
-	/**
-	 * The time slot (period) of the class to which this student list corresponds.
-	 * @property {String} slot
-	 */
-	this.slot;
-	
-	/**
-	 * The array of StudentData objects that contains the data for all of the
-	 * students in this list.
-	 * @property {Array} students
-	 */
-	this.students;
-	
-	/**
-	 * The object hash of the currently loaded scores for this student list.
-	 * Keyed on studentID/date/categoryID with the value being the score or
-	 * note if the categoryID is zero.
-	 * @property {Object} scores
-	 */
-	this.scores;
-	
-	/**
-	 * The index into the array of students of the current selected student.
-	 * @property {Number} curStudentIndex
-	 */
-	this.curStudentIndex = (this.students && this.students.length > 0 ? 0 : -1);
-}
+//-------------------------------------------------------
+// StudentList object
 
 StudentList.prototype = new EventTarget();
 StudentList.prototype.constructor = StudentList;
 
 // events fired by this object
 StudentList.STUDENT_LIST_CHANGED = "StudentListChanged";
+
+function StudentList(spec) {
+	EventTarget.call(this);
+	
+	for (var prop in spec)
+		this[prop] = spec[prop];
+	this.curStudentIndex = (this.students && this.students.length > 0 ? 0 : -1);
+}
 
 StudentList.prototype.atEnd = function() { return this.curStudentIndex >= this.getStudentCount() - 1 }
 StudentList.prototype.atStart = function() { return this.curStudentIndex == 0 }
